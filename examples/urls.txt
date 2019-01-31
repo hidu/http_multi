@@ -1,0 +1,2 @@
+http://www.baidu.com/
+http://static.oschina.net/new-osc/js/utils/jquery.min.js
