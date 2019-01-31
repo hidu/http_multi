@@ -8,6 +8,7 @@ type Response struct {
 	ID         string `json:"id"`
 	URL        string `json:"url"`
 	StatusCode int    `json:"status"`
+	Error      string `json"error"`
 	RespBody   string `json:"body"`
 }
 

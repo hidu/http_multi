@@ -1,6 +1,7 @@
 package http_mutil
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"github.com/hidu/goutils/fs"
@@ -190,16 +191,21 @@ func (wp *WorkerPool) saveResponse(resp *Response) error {
 	if err != nil {
 		return err
 	}
-	bf = append(bf, '\n')
+
+	var buf bytes.Buffer
+	buf.WriteString(fmt.Sprintf("%d\t", resp.StatusCode))
+	buf.Write(bf)
+	buf.Write([]byte("\n"))
+
 	wp.lock.Lock()
 	defer wp.lock.Unlock()
-	n, wErr := wp.outFile.Write(bf)
+	n, wErr := wp.outFile.Write(buf.Bytes())
 	if wErr != nil {
 		return wErr
 	}
 
-	if n != len(bf) {
-		return fmt.Errorf("expect wrote %d bytes,but wrote %d bytes", len(bf), n)
+	if n != buf.Len() {
+		return fmt.Errorf("expect wrote %d bytes,but wrote %d bytes", buf.Len(), n)
 	}
 
 	return nil

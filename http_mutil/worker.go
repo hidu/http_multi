@@ -86,6 +86,7 @@ func (w *Worker) TalkWithHTTP(req *Request) error {
 		URL:        req.URL,
 		StatusCode: status,
 		RespBody:   string(body),
+		Error:      fmt.Sprintf("%v", err),
 	}
 
 	saveErr := w.workerPool.saveResponse(resp)
