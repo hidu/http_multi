@@ -1,4 +1,4 @@
-package http_mutil
+package http_multi
 
 import (
 	"bufio"

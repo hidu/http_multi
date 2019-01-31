@@ -1,4 +1,4 @@
-package http_mutil
+package http_multi
 
 import (
 	"bytes"
@@ -34,8 +34,8 @@ func NewWorkerPool() *WorkerPool {
 	flag.Usage = func() {
 		help()
 		fmt.Fprintln(os.Stderr, "")
-		fmt.Fprintln(os.Stderr, "Http Mutil")
-		fmt.Fprintln(os.Stderr, "Site: https://github.com/hidu/http_mutil")
+		fmt.Fprintln(os.Stderr, "Http Multi")
+		fmt.Fprintln(os.Stderr, "Site: https://github.com/hidu/http_multi")
 		fmt.Fprintln(os.Stderr, "Version: "+Version)
 		fmt.Fprintln(os.Stderr, "")
 	}
