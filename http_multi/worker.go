@@ -75,18 +75,25 @@ func (w *Worker) TalkWithHTTP(req *Request) error {
 	var body []byte
 	var err error
 
+	start := time.Now()
+
 	for ; try < tryMax; try++ {
 		status, body, err = w.doRequest(req)
 		if err == nil {
 			break
 		}
 	}
+
+	cost := time.Since(start)
+
 	resp := &Response{
 		ID:         req.ID,
 		URL:        req.URL,
 		StatusCode: status,
 		RespBody:   string(body),
 		Error:      fmt.Sprintf("%v", err),
+		Cost:       int64(cost.Nanoseconds() / 1e6),
+		LineNo:     req.LineNo,
 	}
 
 	saveErr := w.workerPool.saveResponse(resp)

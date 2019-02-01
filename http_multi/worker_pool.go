@@ -43,7 +43,7 @@ func NewWorkerPool() *WorkerPool {
 	input := NewInput()
 	config := input.config
 
-	flag.StringVar(&config.Input, "input", config.Input, "使用流式输入请求参数,一行一个\n可选值：stdin-使用标准输入；文件地址(eg：data/demo.txt)-从该文件读入\n")
+	flag.StringVar(&config.Input, "input", config.Input, "输入数据流文件地址(一行一个URL/request)\n;其他特殊值：stdin-从stdin读取数据流")
 	flag.StringVar(&config.InputFormat, "input_format", config.InputFormat, "输入数据流/文件格式，具体如下："+_InputFormatDesc)
 	flag.UintVar(&config.Conc, "conc", config.Conc, "并发数")
 	flag.UintVar(&config.Retry, "retry", config.Retry, "重试次数")
@@ -55,8 +55,8 @@ func NewWorkerPool() *WorkerPool {
 	//	flag.UintVar(&config.ReadTimeMs, "rtimeout", config.ReadTimeMs, "网络超时-读取数据，单位ms")
 
 	flag.BoolVar(&config.Trace, "trace", config.Trace, "调试模式，会将交互的详细信息打印出来")
-	flag.StringVar(&config.LogFileName, "log", config.LogFileName, "日志文件路径；若不需要文件记录日志，可输入固定值【no】")
-	flag.StringVar(&config.OutFileName, "out", config.OutFileName, "response输出文件路径")
+	flag.StringVar(&config.LogFileName, "log", config.LogFileName, "日志文件路径；其他特殊值：stderr-输出到stderr，不输出到文件")
+	flag.StringVar(&config.OutFileName, "out", config.OutFileName, "response输出文件路径；其他特殊值:stdout-输出到stdout，不输出到文件")
 
 	flag.Parse()
 
@@ -157,7 +157,7 @@ func (wp *WorkerPool) prepare() {
 func (wp *WorkerPool) initWithConfig() error {
 	log.Println("init: logFileName=", wp.config.LogFileName)
 
-	if wp.config.LogFileName != "no" {
+	if wp.config.LogFileName != "stderr" {
 		if err := fs.DirCheck(wp.config.LogFileName); err != nil {
 			return err
 		}
@@ -173,14 +173,18 @@ func (wp *WorkerPool) initWithConfig() error {
 
 	log.Println("init: outFileName=", wp.config.OutFileName)
 
-	if err := fs.DirCheck(wp.config.OutFileName); err != nil {
-		return err
-	}
+	wp.outFile = os.Stdout
 
-	var fErr error
-	wp.outFile, fErr = os.OpenFile(wp.config.OutFileName, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
-	if fErr != nil {
-		return fErr
+	if wp.config.OutFileName != "stdout" {
+		if err := fs.DirCheck(wp.config.OutFileName); err != nil {
+			return err
+		}
+
+		var fErr error
+		wp.outFile, fErr = os.OpenFile(wp.config.OutFileName, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
+		if fErr != nil {
+			return fErr
+		}
 	}
 
 	return nil

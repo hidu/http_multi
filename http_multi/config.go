@@ -7,7 +7,7 @@ import (
 
 const InputFormatURlListGet string = "url_list_get"
 const InputFormatJson string = "json"
-const Version string = "v1.0 20190131"
+const Version string = "v1.0 20190201"
 
 var _InputFormatDesc = `
 ` + InputFormatURlListGet + ` : 每行一条url地址，会以GET请求发出
