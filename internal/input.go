@@ -1,4 +1,4 @@
-package http_multi
+package internal
 
 import (
 	"bufio"
@@ -9,14 +9,14 @@ import (
 	"os"
 )
 
-func NewInput() *Input {
+func newInput() *Input {
 	input := &Input{
 		parserHandlers: make(map[string]InputParserFn),
 		requestChan:    make(chan *Request, 1024),
-		config:         NewConfig(),
+		config:         newConfig(),
 	}
-	input.RegistPaserFn(InputFormatURlListGet, parserInputFormatURlListGet)
-	input.RegistPaserFn(InputFormatJson, parserInputFormatJson)
+	input.RegistPaserFn(InputFormatURLListGet, parserInputFormatURLListGet)
+	input.RegistPaserFn(InputFormatJSON, parserInputFormatJSON)
 	return input
 }
 
@@ -40,7 +40,7 @@ func (i *Input) RegistPaserFn(name string, fn InputParserFn) {
 	i.parserHandlers[name] = fn
 }
 
-//ParseStream 解析数据流
+// ParseStream 解析数据流
 func (i *Input) ParseStream() {
 
 	i.requestChan = make(chan *Request, 10)
@@ -85,7 +85,7 @@ func (i *Input) ParseStream() {
 	}
 }
 
-//Next 获取一个请求
+// Next 获取一个请求
 func (i *Input) Next() (req *Request, err error) {
 	for req := range i.requestChan {
 		return req, nil

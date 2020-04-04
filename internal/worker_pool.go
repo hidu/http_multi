@@ -1,18 +1,19 @@
-package http_multi
+package internal
 
 import (
 	"bytes"
 	"flag"
 	"fmt"
-	"github.com/hidu/goutils/fs"
 	"io"
 	"log"
 	"os"
 	"sync"
 	"time"
+
+	"github.com/hidu/goutils/fs"
 )
 
-//WorkerPool wokrer工作池
+// WorkerPool worker工作池
 type WorkerPool struct {
 	config      *Config
 	requestChan chan *Request
@@ -28,7 +29,7 @@ type WorkerPool struct {
 	lock *sync.Mutex
 }
 
-//NewWorkerPool 创建wokrer工作池对象
+// NewWorkerPool 创建wokrer工作池对象
 func NewWorkerPool() *WorkerPool {
 	help := flag.Usage
 	flag.Usage = func() {
@@ -40,7 +41,7 @@ func NewWorkerPool() *WorkerPool {
 		fmt.Fprintln(os.Stderr, "")
 	}
 
-	input := NewInput()
+	input := newInput()
 	config := input.config
 
 	flag.StringVar(&config.Input, "input", config.Input, "输入数据流文件地址(一行一个URL/request)\n;其他特殊值：stdin-从stdin读取数据流")
@@ -50,9 +51,9 @@ func NewWorkerPool() *WorkerPool {
 
 	flag.UintVar(&config.TimeoutMs, "timeout", config.TimeoutMs, "超时时间，单位ms")
 
-	//	flag.UintVar(&config.ConnectTimeoutMs, "ctimeout", config.ConnectTimeoutMs, "网络超时-连接，单位ms")
-	//	flag.UintVar(&config.WriteTimeoutMs, "wtimeout", config.WriteTimeoutMs, "网络超时-写数据，单位ms")
-	//	flag.UintVar(&config.ReadTimeMs, "rtimeout", config.ReadTimeMs, "网络超时-读取数据，单位ms")
+	// 	flag.UintVar(&config.ConnectTimeoutMs, "ctimeout", config.ConnectTimeoutMs, "网络超时-连接，单位ms")
+	// 	flag.UintVar(&config.WriteTimeoutMs, "wtimeout", config.WriteTimeoutMs, "网络超时-写数据，单位ms")
+	// 	flag.UintVar(&config.ReadTimeMs, "rtimeout", config.ReadTimeMs, "网络超时-读取数据，单位ms")
 
 	flag.BoolVar(&config.Trace, "trace", config.Trace, "调试模式，会将交互的详细信息打印出来")
 	flag.StringVar(&config.LogFileName, "log", config.LogFileName, "日志文件路径；其他特殊值：stderr-输出到stderr，不输出到文件")
@@ -75,7 +76,7 @@ func NewWorkerPool() *WorkerPool {
 	return wp
 }
 
-//Start 启动进程
+// Start 启动进程
 func (wp *WorkerPool) Start() {
 	log.Println("workerPool start")
 
@@ -85,7 +86,7 @@ func (wp *WorkerPool) Start() {
 		req, err := wp.input.Next()
 		if req != nil {
 			wp.requestChan <- req
-			//新创建一个异步请求则计数加1
+			// 新创建一个异步请求则计数加1
 			wp.talkWait.Add(1)
 		}
 
@@ -94,20 +95,20 @@ func (wp *WorkerPool) Start() {
 		}
 	}
 
-	//等待所有的请求都完成
+	// 等待所有的请求都完成
 	wp.talkWait.Wait()
 
 	log.Println("workerPool stoped")
 }
 
-//NewWorkerPoolWithConfig  创建wokrer工作池对象
-func NewWorkerPoolWithConfig(config *Config, intput *Input) *WorkerPool {
+// NewWorkerPoolWithConfig  创建worker工作池对象
+func NewWorkerPoolWithConfig(config *Config, input *Input) *WorkerPool {
 	pool := &WorkerPool{
 		config:      config,
 		requestChan: make(chan *Request, config.RequestQueueSize),
 		workers:     make([]*Worker, 0),
 		workersFree: make(chan *Worker, config.Conc),
-		input:       intput,
+		input:       input,
 		talkWait:    &sync.WaitGroup{},
 		startTime:   time.Now(),
 		lock:        new(sync.Mutex),
@@ -134,11 +135,11 @@ func (wp *WorkerPool) prepare() {
 			go func(worker *Worker, req *Request) {
 
 				if err := worker.Talk(req); err != nil {
-					//todo
+					// todo
 					log.Fatalln("talk with error:", err.Error())
 				}
 
-				//完成一个异步请求则计数减1
+				// 完成一个异步请求则计数减1
 				wp.talkWait.Done()
 
 				wp.workersFree <- worker
@@ -198,8 +199,10 @@ func (wp *WorkerPool) saveResponse(resp *Response) error {
 
 	var buf bytes.Buffer
 	buf.WriteString(fmt.Sprintf("%d\t", resp.StatusCode))
+	buf.WriteString(resp.ID)
+	buf.WriteString("\t")
 	buf.Write(bf)
-	buf.Write([]byte("\n"))
+	buf.WriteString("\n")
 
 	wp.lock.Lock()
 	defer wp.lock.Unlock()
@@ -230,7 +233,7 @@ func (wp *WorkerPool) printQPS() {
 	log.Printf("pool_qps_info total=%d success=%d all_qps=%.2f\n", qps.total, qps.success, qps.qps)
 }
 
-//Close 资源回收
+// Close 资源回收
 func (wp *WorkerPool) Close() {
 	qps := wp.getQPS()
 	for _, worker := range wp.workers {

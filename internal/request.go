@@ -1,4 +1,4 @@
-package http_multi
+package internal
 
 import (
 	"encoding/json"
@@ -13,8 +13,8 @@ type Request struct {
 	HTTPRequest *http.Request
 }
 
-//解析单行url形式的请求输入
-func parserInputFormatURlListGet(config *Config, line []byte) (*Request, error) {
+// 解析单行url形式的请求输入
+func parserInputFormatURLListGet(config *Config, line []byte) (*Request, error) {
 	reqURL := string(line)
 	req, err := http.NewRequest("GET", reqURL, nil)
 	if err != nil {
@@ -28,7 +28,7 @@ func parserInputFormatURlListGet(config *Config, line []byte) (*Request, error) 
 	return myReq, nil
 }
 
-type InputFormatJsonRequest struct {
+type InputFormatJSONRequest struct {
 	ID     string            `json:"id"`
 	Method string            `json:"method"`
 	URL    string            `json:"url"`
@@ -36,12 +36,12 @@ type InputFormatJsonRequest struct {
 	Body   string            `json:"body"`
 }
 
-func (jr *InputFormatJsonRequest) String() string {
+func (jr *InputFormatJSONRequest) String() string {
 	bf, _ := json.Marshal(jr)
 	return string(bf)
 }
 
-var _defaultJsonRequest = &InputFormatJsonRequest{
+var _defaultJSONRequest = &InputFormatJSONRequest{
 	ID:     "update_uid_1",
 	Method: "post",
 	URL:    "http://127.0.0.1:8088/user/save/1",
@@ -51,9 +51,9 @@ var _defaultJsonRequest = &InputFormatJsonRequest{
 	Body: "name=HanMeiMei&age=12",
 }
 
-//解析json格式的请求
-func parserInputFormatJson(config *Config, line []byte) (*Request, error) {
-	var data *InputFormatJsonRequest
+// 解析json格式的请求
+func parserInputFormatJSON(config *Config, line []byte) (*Request, error) {
+	var data *InputFormatJSONRequest
 	err := json.Unmarshal(line, &data)
 	if err != nil {
 		return nil, err

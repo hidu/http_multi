@@ -1,4 +1,4 @@
-package http_multi
+package internal
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-//Worker 一个worker(实际进行网络操作的worker)
+// Worker 一个worker(实际进行网络操作的worker)
 type Worker struct {
 	config *Config
 
@@ -25,7 +25,7 @@ type Worker struct {
 	workerPool *WorkerPool
 }
 
-//NewWorker 创建新worker
+// NewWorker 创建新worker
 func NewWorker(id int, workerPool *WorkerPool) *Worker {
 	worker := &Worker{
 		id:         id,
@@ -45,17 +45,17 @@ func NewWorker(id int, workerPool *WorkerPool) *Worker {
 	return worker
 }
 
-//Talk 和远端进行网络交互-同步
+// Talk 和远端进行网络交互-同步
 func (w *Worker) Talk(req *Request) error {
 	atomic.AddUint64(&w.talkTotal, 1)
 
 	return w.TalkWithHTTP(req)
 }
 
-//TalkWithHTTP HTTP协议的交互
+// TalkWithHTTP HTTP协议的交互
 func (w *Worker) TalkWithHTTP(req *Request) error {
 	if w.httpClient == nil {
-		//		timeout := time.Duration(w.config.ConnectTimeoutMs+w.config.WriteTimeoutMs+w.config.ReadTimeMs) * time.Millisecond
+		// 		timeout := time.Duration(w.config.ConnectTimeoutMs+w.config.WriteTimeoutMs+w.config.ReadTimeMs) * time.Millisecond
 		timeout := time.Duration(w.config.TimeoutMs) * time.Millisecond
 		w.httpClient = &http.Client{
 			Timeout: timeout,
@@ -119,7 +119,7 @@ func (w *Worker) doRequest(req *Request) (status int, respBody []byte, err error
 	return resp.StatusCode, httpBody, err
 }
 
-//LogfBase 打印日志
+// LogfBase 打印日志
 func (w *Worker) LogfBase(format string, v ...interface{}) {
 	log.Printf("worker_id=%d %s",
 		w.id,
@@ -127,17 +127,17 @@ func (w *Worker) LogfBase(format string, v ...interface{}) {
 	)
 }
 
-//Logf 打印日志
+// Logf 打印日志
 func (w *Worker) Logf(format string, v ...interface{}) {
 	w.LogfBase("%s", fmt.Sprintf(format, v...))
 }
 
-//Log 打印日志
+// Log 打印日志
 func (w *Worker) Log(v ...interface{}) {
 	w.Logf(fmt.Sprint(v...))
 }
 
-//printQPS 打印worker的qps信息
+// printQPS 打印worker的qps信息
 func (w *Worker) getQPS() *qpsInfo {
 	num := atomic.LoadUint64(&w.successTotal)
 	cost := time.Since(w.startTime)
@@ -155,7 +155,7 @@ func (w *Worker) printQPS() {
 	w.LogfBase("worker_qps_info: total=%d success=%d worker_qps=%.2f", qps.total, qps.success, qps.qps)
 }
 
-//Close 回收资源
+// Close 回收资源
 func (w *Worker) Close() {
 	cost := time.Since(w.startTime)
 	qps := w.getQPS()
